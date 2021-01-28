@@ -2,6 +2,9 @@
 # macOS
 .DS_Store
 
+# intermediary reports
+src/*.pdf
+
 # vim
 .*.swp
 
@@ -9,6 +12,7 @@
 renv
 
 # sujets des tps :
+sujets
 *sujet.pdf
 
 ################################################

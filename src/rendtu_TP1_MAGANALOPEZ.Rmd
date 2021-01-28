@@ -1,0 +1,73 @@
+---
+title: "TP1 Régression linéaire simple : pollution de l'air"
+author: "Gustavo Magaña López"
+date: "18/01/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Préliminaire : analyse descriptive
+
+1. Importer les données ‘ozone_simple.txt’.
+```{r import}
+library(tidyverse)
+data <- readr::read_delim("ozone_simple.txt", delim = ";", col_types = c(col_double(), col_double()))
+```
+
+2. Calculer la moyenne, la médiane, la variance de la concentration maximale 03 et de la
+température T12.
+```{r stats}
+data %>%
+  summarise(
+    mean03 = mean(O3),
+    meanT12 = mean(T12),
+    medianO3 = median(O3),
+    medianT12 = median(T12),
+    var03 = var(O3),
+    varT12 = var(T12),
+    maxO3 = max(O3),
+    maxT12 = max(T12)
+  ) %>%
+    t()
+```
+
+
+3. Tracer l’histogramme de la concentration maximale 03, puis celui de la température T12.
+```{r hists}
+data %>%
+    ggplot(aes(x = O3)) +
+      geom_histogram()
+
+data %>%
+  ggplot(aes(x = T12)) +
+    geom_histogram()
+```
+
+4. Tracer, sous la forme d’un nuage de point, le graphe de la concentration maximale 03 en
+fonction de la température T12.
+```{r nuage}
+data %>%
+  ggplot(aes(x = T12, y = O3)) +
+    geom_point()
+```
+
+
+# Calcul des estimateurs des moindres carrés
+5. Écrire un modèle de régression linéaire permettant d’expliquer la 
+concentration maximale 03 en fonction de la température T12.
+
+$$
+O3 = \beta_{1} + \beta_{2}T12 + \epsilon
+$$
+
+6. Utiliser R pour estimer les paramètres de ce modèle :
+  * D'abord en utilisant les formules du cours,
+  * ensuite à l’aide de la fonction lm.
+Donner les estimations de l’ordonnée à l’origine, la pente et la variance résiduelle.
+7. Tracer la droite de régression (superposée avec le nuage de points représentant les obser-
+vations).
+8. Faire un graphe des résidus. Que constate-t-on ?

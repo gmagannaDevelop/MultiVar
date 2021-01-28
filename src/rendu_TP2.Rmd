@@ -1,0 +1,106 @@
+---
+title: "TP2"
+author: "Gustavo Magaña López"
+date: "25/01/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+here::i_am("src/rendu_TP2.Rmd")
+library(here)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r reproduct}
+# Pour puovoir reproduire les resultats :
+set.seed(1234)
+library(tidyverse)
+```
+## Données simulées 
+
+$$
+y = \beta_{1} + \beta_{2}x + \epsilon
+$$
+
+Avec $x$, $\epsilon$ indépendantes.
+
+* $x$ de loi uniforme sur $[0,1]$
+* $\epsilon$ de loi gaussienne $N(0, \sigma^2)$.
+
+On fixe $\beta_{1} = -1$, $\beta_{2} = 3$ et $\sigma^2 = 2$.
+
+### Définition des paramètres et de la fonction.
+```{r sim1}
+beta1 <- -1.0
+beta2 <- 3.0
+sigma2 <- 2.0
+
+modele <- function(x, eps) beta1 + beta2*x + eps
+modele <- Vectorize(modele)
+```
+
+1. Simuler n = 100 réalisations indépendantes $(x_{i} , y_{i} )$ du couple (x, y) défini par (1).
+```{r sim2}
+epsilon_chap <- rnorm(100, mean = 0, sd = sigma2^0.5)
+x_i <- runif(100)
+y_i <- modele(x_i, epsilon_chap)
+```
+
+
+À l’aide du seul échantillon $(x_{i} , y_{i} )$, estimer par moindres 
+carrés les paramètres $\beta_{1}$ et $\beta_{2}$ du modèle (1),
+ainsi que la variance résiduelle $\sigma^2$.
+Comparer les valeurs estimées aux valeurs exactes de ces paramètres.
+```{r estimation.manuelle}
+beta2_chap <- cov(x_i, y_i) / var(x_i)
+beta1_chap <- mean(y_i) - beta2_chap*mean(x_i)
+glue::glue("beta1 ~ {beta1_chap}, beta2 ~ {beta2_chap}")
+```
+
+```{r estim.lm}
+## juste pour verifier
+lm1 <- lm(y_i ~ x_i)
+summary(lm1)
+var(lm1$residuals)
+```
+
+On peut voir qu'ils sont assez similaires XD.
+
+```{r changement.de.seed}
+n.echantillons <- 200
+experiences <- data.frame(beta1=double(), beta2=double(), sigma2=double())
+for(i in 1:n.echantillons){
+  set.seed(i)
+  epsilon_chap <- rnorm(100, mean = 0, sd = sigma2^0.5)
+  x_i <- runif(100)
+  y_i <- modele(x_i, epsilon_chap)
+  lm1 <- lm(y_i ~ x_i)
+  experiences <- rbind(
+    experiences, 
+    data.frame(
+      beta1 = lm1$coefficients[["(Intercept)"]],
+      beta2 = lm1$coefficients[["x_i"]],
+      sigma2=var(lm1$residuals) / (length(x_i) - 2)
+    )
+  )
+} 
+experiences <- tibble::tibble(experiences)
+```
+
+On fixe $\beta_{1} = -1$, $\beta_{2} = 3$ et $\sigma^2 = 2$.
+```{r analyse, message=FALSE, warning=FALSE}
+experiences %>%
+  ggplot(mapping = aes(x = beta1)) +
+    geom_histogram(aes(y = stat(density)), bins = 15) +
+    geom_density() +
+    ggtitle(glue::glue("$B1 : {round(mean(experiences$beta1), 2)} vs {beta1}"))
+
+experiences %>%
+  ggplot(mapping = aes(x = beta2)) +
+    geom_histogram(aes(y = stat(density)), bins = 15) +
+    geom_density() +
+    ggtitle(glue::glue("$B2 : {round(mean(experiences$beta2), 2)} vs {beta2}"))
+```
+
+
+
