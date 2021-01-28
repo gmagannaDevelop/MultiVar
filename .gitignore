@@ -1,3 +1,18 @@
+
+# macOS
+.DS_Store
+
+# vim
+.*.swp
+
+# renv directory :
+renv
+
+# sujets des tps :
+*sujet.pdf
+
+################################################
+
 # History files
 .Rhistory
 .Rapp.history
