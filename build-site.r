@@ -2,11 +2,6 @@
 library(rmarkdown)
 library(here)
 library(glue)
-library(stringr)
-
-rmd.to.html <- function(x){
-  return(str_replace(x, "Rmd", "html"))
-}
 
 render.site <- function(x){
   rmarkdown::render(
@@ -17,6 +12,6 @@ render.site <- function(x){
 }
 
 rmd.files <- Sys.glob(glue::glue("{here::here('src')}/*.Rmd"))
-html.files <- sapply(rmd.files, rmd.to.html, USE.NAMES = FALSE)
 
 sapply(rmd.files, render.site)
+
