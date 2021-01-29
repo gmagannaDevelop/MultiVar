@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-here::i_am("src/rendu_TP2.Rmd")
+here::i_am("src/TP2.Rmd")
 library(here)
 knitr::opts_chunk$set(echo = TRUE)
 ```

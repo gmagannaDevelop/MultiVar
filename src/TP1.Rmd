@@ -6,6 +6,8 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
+here::i_am("src/TP1.Rmd")
+library(here)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -15,7 +17,10 @@ knitr::opts_chunk$set(echo = TRUE)
 1. Importer les données ‘ozone_simple.txt’.
 ```{r import}
 library(tidyverse)
-data <- readr::read_delim("ozone_simple.txt", delim = ";", col_types = c(col_double(), col_double()))
+data <- readr::read_delim(
+  here::here("data", "ozone_simple.txt"), delim = ";", 
+  col_types = c(col_double(), col_double())
+)
 ```
 
 2. Calculer la moyenne, la médiane, la variance de la concentration maximale 03 et de la

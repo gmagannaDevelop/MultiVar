@@ -4,6 +4,8 @@
 
 # intermediary reports
 src/*.pdf
+src/*.tex
+src/*.log
 
 # vim
 .*.swp
