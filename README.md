@@ -32,8 +32,8 @@ pratique en R que ce répertoire peut apporter.
 
 ## Travaux
 
-1. [Regression ](build/TP1.html)
+1. [Prise en main (TP1)](build/TP1.html)
 
-2. [Encore regression XD](build/TP2)
+2. [Données simulées (TP2)](build/TP2)
    
    

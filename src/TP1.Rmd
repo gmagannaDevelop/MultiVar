@@ -11,11 +11,31 @@ library(here)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Pollution de l'air
+
+La pollution de l'air est un problème de santé publique majeur. 
+De nombreuses études ont démontré l'influence sur la santé de certains 
+composés chimiques, dont l'ozone ($O_{3}$), tout particulièrement sur 
+les personnes sensibles (nouveaux-nés, asthmatiques, personnes âgées). 
+Il est donc important de savoir prévoir les pics de concentration de l'ozone.
+On sait que la concentration en ozone varie avec la température : plus la 
+température est élevée, plus la concentration en ozone est importante. 
+Cette relation vague doit être précisée en vue de prévoir les pics d'ozone. 
+Dans ce but, l'association Air Breizh (surveillance de la qualité
+de l'air en Bretagne) mesure depuis 1994 la concentration en $O_3$ (en $\mu g/L$) 
+toutes les dix minutes et obtient donc le maximum journalier de la concentration 
+en $O_{3}$ , que l'on note désormais $O3$.
+Air Breizh collecte également des données météorologiques correspondant à 
+ces mesures d'ozone, dont la température à 12h, que l'on note $T12$.
+À partir de ces données (rassemblées dans le fichier 
+[data/ozone_simple.txt](../data/ozone_simple.txt)), on cherche à expliquer 
+la concentration maximale $03$ à l'aide de la température T12.
+
 
 # Préliminaire : analyse descriptive
 
-1. Importer les données ‘ozone_simple.txt’.
-```{r import}
+1. Importer les données `ozone_simple.txt`.
+```{r import, message=FALSE}
 library(tidyverse)
 data <- readr::read_delim(
   here::here("data", "ozone_simple.txt"), delim = ";", 
@@ -41,18 +61,29 @@ data %>%
 ```
 
 
-3. Tracer l’histogramme de la concentration maximale 03, puis celui de la température T12.
+3. Tracer l'histogramme de la concentration maximale 03, puis celui de la température T12.
 ```{r hists}
+source(here::here("utils", "plotting-funcs.R"))
 data %>%
     ggplot(aes(x = O3)) +
-      geom_histogram()
+      geom_histogram(
+        aes(y = stat(density)), colour="black", fill="white", 
+        binwidth = optim.binwidth(data$O3)
+      ) + 
+        geom_density(alpha=.2, fill="blue")
+
 
 data %>%
   ggplot(aes(x = T12)) +
-    geom_histogram()
+    geom_histogram(
+        aes(y = stat(density)), colour="black", fill="white", 
+        binwidth = optim.binwidth(data$T12)
+      ) + 
+        geom_density(alpha=.2, fill="blue")
 ```
 
-4. Tracer, sous la forme d’un nuage de point, le graphe de la concentration maximale 03 en
+
+4. Tracer, sous la forme d'un nuage de point, le graphe de la concentration maximale 03 en
 fonction de la température T12.
 ```{r nuage}
 data %>%
@@ -62,7 +93,8 @@ data %>%
 
 
 # Calcul des estimateurs des moindres carrés
-5. Écrire un modèle de régression linéaire permettant d’expliquer la 
+
+5. Écrire un modèle de régression linéaire permettant d'expliquer la 
 concentration maximale 03 en fonction de la température T12.
 
 $$
@@ -71,8 +103,63 @@ $$
 
 6. Utiliser R pour estimer les paramètres de ce modèle :
   * D'abord en utilisant les formules du cours,
-  * ensuite à l’aide de la fonction lm.
-Donner les estimations de l’ordonnée à l’origine, la pente et la variance résiduelle.
+  * ensuite à l'aide de la fonction lm.
+  * Donner les estimations de l'ordonnée à l'origine, 
+  la pente et la variance résiduelle.
+
+```{r estimation1}
+beta2_chap <- cov(data$T12, data$O3) / var(data$T12)
+beta1_chap <- mean(data$O3) - beta2_chap*mean(data$T12)
+glue::glue("Estimation manuelle\n beta1 ~ {beta1_chap}, beta2 ~ {beta2_chap}")
+```
+```{r estimation2}
+modele <- lm(O3 ~ T12, data = data)
+beta1_lm <- modele$coefficients[["(Intercept)"]]
+beta2_lm <- modele$coefficients[["T12"]]
+var.resid <- var(modele$residuals)
+glue::glue("Estimation avec lm\n beta1 ~ {beta1_lm}, beta2 ~ {beta2_lm}, var.res ~ {var.resid}")
+```
+
 7. Tracer la droite de régression (superposée avec le nuage de points représentant les obser-
 vations).
+
+```{r estimations}
+
+data %>%
+  ggplot(mapping = aes(x=T12, y=O3)) + 
+    geom_point() +
+      geom_abline(slope = beta2_lm, intercept = beta1_lm)
+```
+
+
 8. Faire un graphe des résidus. Que constate-t-on ?
+
+Les résidus ne semblent d'être _i.i.d_. Leur distribution semble d'être 
+dépendante de la valeur de la température $T12$ ce qui pourrait invalider le 
+modèle qui est déjà mauvais en termes de qualité prédictive $r^2 = 0.2790$.
+
+L'estimation de la densité des résidus à un léger caractère bimodale, ce 
+qui pourrait violer l'hypothèse de normalité des résidus. 
+Or, le `shapiro.test` montre que l'échantillon ne supporte suffisamment
+le rejet de l'hypothèse de nulle de normalité à un $95\%$ de confiance.
+
+
+
+```{r resids}
+residus <- tibble(T12=data$T12, residuals=modele$residuals)
+
+residus %>%
+  ggplot(mapping = aes(x=T12, y=residuals)) +
+    geom_point()
+
+residus %>%
+  ggplot(aes(x = residuals)) +
+    geom_histogram(
+        aes(y = stat(density)), colour="black", fill="white", 
+        binwidth = optim.binwidth(residus$residuals)
+      ) + 
+        geom_density(alpha=.2, fill="blue")
+
+shapiro.test(modele$residuals)
+```
+
