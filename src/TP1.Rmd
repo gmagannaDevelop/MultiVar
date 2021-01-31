@@ -141,6 +141,15 @@ data %>%
 
 8. Faire un graphe des résidus. Que constate-t-on ?
 
+```{r qq}
+residus <- tibble(T12=data$T12, residuals=modele$residuals)
+
+residus %>%
+  ggplot(mapping = aes(sample = residuals)) +
+    stat_qq() + 
+      stat_qq_line()
+```
+
 Les résidus ne semblent d'être _i.i.d_. Leur distribution semble d'être 
 dépendante de la valeur de la température $T12$ ce qui pourrait invalider le 
 modèle qui est déjà mauvais en termes de qualité prédictive $r^2 = 0.2790$.
@@ -151,10 +160,7 @@ Or, le `shapiro.test` montre que l'échantillon ne supporte suffisamment
 le rejet de l'hypothèse de nulle de normalité à un $95\%$ de confiance.
 
 
-
 ```{r resids}
-residus <- tibble(T12=data$T12, residuals=modele$residuals)
-
 residus %>%
   ggplot(mapping = aes(x=T12, y=residuals)) +
     geom_point()
