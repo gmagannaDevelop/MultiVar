@@ -1,4 +1,4 @@
-# MultiVar : Cours Statistiques Multivariées
+# MultiVar : Statistiques Multivariées
 
 Cours du [Master en Bio-Informatique et Biostatistiques](https://www.universite-paris-saclay.fr/formation/master/bio-informatique)
 de la Faculté des 
@@ -24,7 +24,11 @@ pratique en R que ce répertoire peut apporter.
   d'isoler les __dependencies__ d'un projet de l'installation du système. 
   En R, ceci est possible grâce à [renv](https://rstudio.github.io/renv/).
   Je vous invite à lire leur documentation et commencer à l'utiliser pour 
-  tous vos projets R. 
+  tous vos projets R. __Je vous conseille fortement de lire la documentation
+  de renv__. C'est le seul moyen que j'ai de vous garantir que vous pourrez
+  reproduire mes résultats. Sans ceci, la réussite de reproduction des 
+  résultats est une variable aléatoire qui suit la loi de Bernoulli avec
+  une probabilité de réussite ridiculement faible.
 
 * Une fois créé l'environnement spécifié par le fichier `renv.lock`, activez-le
   pour éditer ou exécuter n'importe quel rapport `.Rmd` ou script `.R` sans 
