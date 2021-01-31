@@ -2,7 +2,11 @@
 title: "TP1 Régression linéaire simple : pollution de l'air"
 author: "Gustavo Magaña López"
 date: "18/01/2021"
-output: pdf_document
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -32,7 +36,7 @@ ces mesures d'ozone, dont la température à 12h, que l'on note $T12$.
 la concentration maximale $03$ à l'aide de la température T12.
 
 
-# Préliminaire : analyse descriptive
+## Préliminaire : analyse descriptive
 
 1. Importer les données `ozone_simple.txt`.
 ```{r import, message=FALSE}
@@ -59,7 +63,7 @@ data %>%
   ) %>%
     t()
 ```
-
+## Visualisation
 
 3. Tracer l'histogramme de la concentration maximale 03, puis celui de la température T12.
 ```{r hists}
@@ -92,7 +96,7 @@ data %>%
 ```
 
 
-# Calcul des estimateurs des moindres carrés
+## Calcul des estimateurs des moindres carrés
 
 5. Écrire un modèle de régression linéaire permettant d'expliquer la 
 concentration maximale 03 en fonction de la température T12.
@@ -120,6 +124,8 @@ var.resid <- var(modele$residuals)
 glue::glue("Estimation avec lm\n beta1 ~ {beta1_lm}, beta2 ~ {beta2_lm}, var.res ~ {var.resid}")
 ```
 
+## Visualisation de la droite de régression
+
 7. Tracer la droite de régression (superposée avec le nuage de points représentant les obser-
 vations).
 
@@ -131,6 +137,7 @@ data %>%
       geom_abline(slope = beta2_lm, intercept = beta1_lm)
 ```
 
+## Analyse des résidus
 
 8. Faire un graphe des résidus. Que constate-t-on ?
 
