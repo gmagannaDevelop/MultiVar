@@ -2,7 +2,11 @@
 title: "TP2"
 author: "Gustavo Magaña López"
 date: "25/01/2021"
-output: pdf_document
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -11,11 +15,18 @@ library(here)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r reproduct}
+```{r reproduct, message=FALSE}
 # Pour puovoir reproduire les resultats :
 set.seed(1234)
 library(tidyverse)
 ```
+
+## Objectifs du TP
+* Simuler plusieurs jeux de données selon un même modèle.
+* Observer la précision et la variabilité des estimateurs par moindres 
+carrés en régression linéaire.
+* Illustrer les résultats du cours sur la loi de ces estimateurs.
+
 ## Données simulées 
 
 $$
@@ -29,7 +40,7 @@ Avec $x$, $\epsilon$ indépendantes.
 
 On fixe $\beta_{1} = -1$, $\beta_{2} = 3$ et $\sigma^2 = 2$.
 
-### Définition des paramètres et de la fonction.
+## Définition des paramètres et de la fonction.
 ```{r sim1}
 beta1 <- -1.0
 beta2 <- 3.0
@@ -39,34 +50,69 @@ modele <- function(x, eps) beta1 + beta2*x + eps
 modele <- Vectorize(modele)
 ```
 
-1. Simuler n = 100 réalisations indépendantes $(x_{i} , y_{i} )$ du couple (x, y) défini par (1).
+## Génération de données
+
+1. Simuler $n = 100$ réalisations indépendantes $(x_{i} , y_{i} )$ du couple 
+$(x, y)$ défini par (1).
 ```{r sim2}
 epsilon_chap <- rnorm(100, mean = 0, sd = sigma2^0.5)
 x_i <- runif(100)
 y_i <- modele(x_i, epsilon_chap)
 ```
 
+## Estimation ponctuelle des paramètres
 
-À l’aide du seul échantillon $(x_{i} , y_{i} )$, estimer par moindres 
+2. À l’aide du seul échantillon $(x_{i} , y_{i} )$, estimer par moindres 
 carrés les paramètres $\beta_{1}$ et $\beta_{2}$ du modèle (1),
 ainsi que la variance résiduelle $\sigma^2$.
 Comparer les valeurs estimées aux valeurs exactes de ces paramètres.
 ```{r estimation.manuelle}
 beta2_chap <- cov(x_i, y_i) / var(x_i)
 beta1_chap <- mean(y_i) - beta2_chap*mean(x_i)
-glue::glue("beta1 ~ {beta1_chap}, beta2 ~ {beta2_chap}")
-```
-
-```{r estim.lm}
-## juste pour verifier
+#glue::glue("beta1 ~ {beta1_chap}, beta2 ~ {beta2_chap}")
 lm1 <- lm(y_i ~ x_i)
 summary(lm1)
 var(lm1$residuals)
 ```
 
-On peut voir qu'ils sont assez similaires XD.
+|             Paramètre            | Réel $\theta$  | Estimation $\hat{\theta}$ |
+|----------------------------------|----------------|---------------------------|
+| pente   $\beta_{2}$              | `r beta2`      |    `r beta2_chap`         |
+| ordonnée à l'origine $\beta_{1}$ | `r beta1`      |    `r beta1_chap`         |
+
+## Représentation visuelle des données et du modèle estimé
+
+```{r vis.ponct}
+donnees <- tibble::tibble(y=y_i, x=x_i)
+donnees %>%
+  ggplot(mapping = aes(x=x, y=y)) +
+    geom_point() +
+      geom_abline(
+        slope = lm1$coefficients[["x_i"]],
+        intercept = lm1$coefficients[["(Intercept)"]]
+      )
+```
+
+## Simulation 
+
+### Estimation sur plusieurs expériences indépendantes
+
+3. Répéter les questions précédentes en changeant la valeur de la graine du générateur de
+nombres aléatoires (utiliser la fonction `set.seed`). Que constate-t-on ?
+
+* Cette question sera répondue avec la suivante.
+
+4. À l'aide d'un script R, stockez les valeurs estimées $\hat{\beta}_{1}$, 
+$\hat{\beta}_{1}$, $\hat{\sigma}^2$ obtenues pour $N = 200$
+échantillons indépendants.
+* Estimez la moyenne, la médiane, la variance de $\hat{\beta}_{1}$. Commentez.
+* Représentez la loi de $\hat{\beta}_{1}$ sous forme d’histogramme. Commentez.
+* Reprenez les deux questions ci-dessus en remplaçant $\hat{\beta}_{1}$
+par $\hat{\beta}_{2}$, puis $\hat{\sigma}^2$.
+
 
 ```{r changement.de.seed}
+# source(here::here("utils", "shorthand.R"))
 n.echantillons <- 200
 experiences <- data.frame(beta1=double(), beta2=double(), sigma2=double())
 for(i in 1:n.echantillons){
@@ -80,27 +126,164 @@ for(i in 1:n.echantillons){
     data.frame(
       beta1 = lm1$coefficients[["(Intercept)"]],
       beta2 = lm1$coefficients[["x_i"]],
-      sigma2=var(lm1$residuals) / (length(x_i) - 2)
+      sigma2= var(lm1$residuals) #/ (length(x_i) - 2)
     )
   )
 } 
 experiences <- tibble::tibble(experiences)
 ```
 
-On fixe $\beta_{1} = -1$, $\beta_{2} = 3$ et $\sigma^2 = 2$.
-```{r analyse, message=FALSE, warning=FALSE}
-experiences %>%
-  ggplot(mapping = aes(x = beta1)) +
-    geom_histogram(aes(y = stat(density)), bins = 15) +
-    geom_density() +
-    ggtitle(glue::glue("$B1 : {round(mean(experiences$beta1), 2)} vs {beta1}"))
+|                   | Moyenne | Médiane | Variance |
+|-------------------|---------|---------|----------|
+| $\hat{\beta}_{1}$ | `r mean(experiences$beta1)`  | `r median(experiences$beta1)`  | `r var(experiences$beta1)` |
+| $\hat{\beta}_{2}$ | `r mean(experiences$beta2)`  | `r median(experiences$beta2)`  | `r var(experiences$beta2)` |
+| $\hat{\sigma}^2$  | `r mean(experiences$sigma2)` | `r median(experiences$sigma2)` | `r var(experiences$sigma2)`|
 
-experiences %>%
-  ggplot(mapping = aes(x = beta2)) +
-    geom_histogram(aes(y = stat(density)), bins = 15) +
-    geom_density() +
-    ggtitle(glue::glue("$B2 : {round(mean(experiences$beta2), 2)} vs {beta2}"))
+Les distributions des estimations des paramètres parmi les simulations semblent
+de ne pas être biaisées, du fait que leurs moyennes et leurs médianes sont assez proches.
+Avec $N = 200$ simulations, les estimations des paramètres s'approchent 
+des vraies valeurs fixées avant de construire le modèle. 
+En comparant les simulations à la première estimation ponctuelle, 
+la possibilité d'une première estimation biaisée est mise en évidence. 
+
+Pour complémenter l'analyse, une estimation d'un intervalle de confiance 
+peut être faite. Afin d'avoir la certitude que l'hypothèse de normalité 
+n'est pas contredite par les données, la fonction `shapiro.test()` est utilisée. 
+Puis, si les _p-valeurs_ ne se trouvent dans la zone de rejet,
+la fonction `t.test()` est utilisée pour calculer un $IC95\%$. 
+
+```{r valid.norm, echo=FALSE}
+shapiro.test(experiences$beta1)
+shapiro.test(experiences$beta2)
+shapiro.test(experiences$sigma2)
+```
+
+Les _p-valeurs_ ne permettent pas le rejet de $H_{0}$ au seuil de $\alpha = 0.05$.
+En supposant que les paramètres suivent une loi normale, les IC sont calculés :
+
+```{r ci.params, echo=FALSE}
+t.test(experiences$beta1)
+t.test(experiences$beta2)
+t.test(experiences$sigma2)
 ```
 
 
+**Rapport moyenne-variance**
+
+|                   | $abs(s^2(\theta) / \bar{x}(\theta))$  |
+|-------------------|---------------------------------------|
+| $\hat{\beta}_{1}$ | `r abs(var(experiences$beta1) / mean(experiences$beta1))`   |
+| $\hat{\beta}_{2}$ | `r abs(var(experiences$beta2) / mean(experiences$beta2))`   |
+| $\hat{\sigma}^2$  | `r abs(var(experiences$sigma2) / mean(experiences$sigma2))` |
+
+Les intervalles de confiance, avec le rapport $abs(s^2(\theta) / \bar{x}(\theta))$
+indiquent que avec plusieurs échantillons, il est possible d'obtenir une 
+bonne estimation des valeurs des paramètres. 
+
+Les histogrammes correspondent bien à l'analyse fait précédemment.
+Seul le caractère apparemment bimodale de la distribution de $\hat{\sigma}^2$
+saut à l'œil comme un point important à discuter.
+
+```{r analyse, message=FALSE, warning=FALSE}
+# Le code est le même pour les autres histogrammes 
+source(here::here("utils", "plotting-funcs.R"))
+experiences %>%
+  ggplot(mapping = aes(x = beta1)) +
+    geom_histogram(
+        aes(y = stat(density)), colour="black", fill="white", 
+        binwidth = optim.binwidth(experiences$beta1)
+    ) + 
+        geom_density(alpha=.2, fill="blue") +
+    ggtitle(glue::glue("B1 : {round(mean(experiences$beta1), 2)} vs {beta1}"))
+```
+
+```{r analyse2, message=FALSE, warning=FALSE, echo=FALSE}
+experiences %>%
+  ggplot(mapping = aes(x = beta2)) +
+    geom_histogram(
+        aes(y = stat(density)), colour="black", fill="white", 
+        binwidth = optim.binwidth(experiences$beta1)
+    ) + 
+        geom_density(alpha=.2, fill="blue") +
+    ggtitle(glue::glue("B2 : {round(mean(experiences$beta2), 2)} vs {beta2}"))
+```
+
+```{r analyse3, message=FALSE, warning=FALSE, echo=FALSE}
+experiences %>%
+  ggplot(mapping = aes(x = sigma2)) +
+    geom_histogram(
+        aes(y = stat(density)), colour="black", fill="white", 
+        binwidth = optim.binwidth(experiences$sigma2)
+    ) + 
+        geom_density(alpha=.2, fill="blue") +
+    ggtitle(glue::glue("sigma2 : {round(mean(experiences$sigma2), 2)} vs {sigma2}"))
+```
+
+### $x_{i}$ fixe, $y_{i}$ recalculé
+
+5. Même question en générant une fois pour toutes les $x_{i}$ (ici, seuls 
+les $y_{i}$ changent d'un échantillon à l'autre).
+
+```{r xi.fixe}
+n.echantillons <- 200
+experiences <- data.frame(beta1=double(), beta2=double(), sigma2=double())
+# le vecteur x_i est crée hors de la boucle
+x_i <- runif(100)
+for(i in 1:n.echantillons){
+  set.seed(i)
+  epsilon_chap <- rnorm(100, mean = 0, sd = sigma2^0.5)
+  y_i <- modele(x_i, epsilon_chap)
+  lm1 <- lm(y_i ~ x_i)
+  experiences <- rbind(
+    experiences, 
+    data.frame(
+      beta1 = lm1$coefficients[["(Intercept)"]],
+      beta2 = lm1$coefficients[["x_i"]],
+      sigma2= var(lm1$residuals) #/ (length(x_i) - 2)
+    )
+  )
+} 
+experiences <- tibble::tibble(experiences)
+```
+
+|                   | Moyenne | Médiane | Variance |
+|-------------------|---------|---------|----------|
+| $\hat{\beta}_{1}$ | `r mean(experiences$beta1)`  | `r median(experiences$beta1)`  | `r var(experiences$beta1)` |
+| $\hat{\beta}_{2}$ | `r mean(experiences$beta2)`  | `r median(experiences$beta2)`  | `r var(experiences$beta2)` |
+| $\hat{\sigma}^2$  | `r mean(experiences$sigma2)` | `r median(experiences$sigma2)` | `r var(experiences$sigma2)`|
+
+
+```{r xi.fixee.analyse, message=FALSE, warning=FALSE, echo=FALSE}
+source(here::here("utils", "plotting-funcs.R"))
+experiences %>%
+  ggplot(mapping = aes(x = beta1)) +
+    geom_histogram(
+        aes(y = stat(density)), colour="black", fill="white", 
+        binwidth = optim.binwidth(experiences$beta1)
+    ) + 
+        geom_density(alpha=.2, fill="blue") +
+    ggtitle(glue::glue("B1 : {round(mean(experiences$beta1), 2)} vs {beta1}"))
+```
+
+```{r xi.fixee.analyse2, message=FALSE, warning=FALSE, echo=FALSE}
+experiences %>%
+  ggplot(mapping = aes(x = beta2)) +
+    geom_histogram(
+        aes(y = stat(density)), colour="black", fill="white", 
+        binwidth = optim.binwidth(experiences$beta1)
+    ) + 
+        geom_density(alpha=.2, fill="blue") +
+    ggtitle(glue::glue("B2 : {round(mean(experiences$beta2), 2)} vs {beta2}"))
+```
+
+```{r xi.fixee.analyse3, message=FALSE, warning=FALSE, echo=FALSE}
+experiences %>%
+  ggplot(mapping = aes(x = sigma2)) +
+    geom_histogram(
+        aes(y = stat(density)), colour="black", fill="white", 
+        binwidth = optim.binwidth(experiences$sigma2)
+    ) + 
+        geom_density(alpha=.2, fill="blue") +
+    ggtitle(glue::glue("sigma2 : {round(mean(experiences$sigma2), 2)} vs {sigma2}"))
+```
 
