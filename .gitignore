@@ -6,6 +6,7 @@
 src/*.pdf
 src/*.tex
 src/*.log
+src/*.html
 
 # vim
 .*.swp
