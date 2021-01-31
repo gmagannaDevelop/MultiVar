@@ -126,8 +126,8 @@ glue::glue("Estimation avec lm\n beta1 ~ {beta1_lm}, beta2 ~ {beta2_lm}, var.res
 
 ## Visualisation de la droite de régression
 
-7. Tracer la droite de régression (superposée avec le nuage de points représentant les obser-
-vations).
+7. Tracer la droite de régression (superposée avec le nuage de points 
+représentant les observations).
 
 ```{r estimations}
 
