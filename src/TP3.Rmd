@@ -1,0 +1,207 @@
+---
+title: "TP3 Régression linéaire simple : intervalles de confiance, tests et diagnostics"
+author: "Gustavo Magaña López, Théo Roncalli, Anthony Boutard"
+date: "01/02/2021"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+here::i_am("src/TP3.Rmd")
+library(here)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Objectifs du TP
+* Savoir déterminer un intervalle de confiance pour $\beta_{1}$, $\beta_{2}$, $\sigma^2$.
+* Savoir déterminer un intervalle de confiance pour une valeur moyenne, un intervalle de
+prévision, et comprendre la différence entre les deux.
+* Savoir effectuer des tests sur $\beta_{1}$, $\beta_{2}$.
+* Interpréter les sorties de la fonction `lm`, en particulier les tests et le 
+coefficient de détermination.
+* Faire un diagnostic sur les résidus, et utiliser le résultat pour construire un meilleur modèle.
+
+## Intervalles de confiance, intervalle de prévision
+
+1. Importer les données `df_simple.txt`.
+```{r import, message=FALSE}
+library(tidyverse)
+data <- readr::read_delim(
+  here::here("data", "ozone_simple.txt"), delim = ";", 
+  col_types = c(col_double(), col_double())
+)
+```
+
+
+1. Charger le jeu de données ‘df_simple.txt’ et ajuster un modèle linéaire expliquant O3
+à l’aide de T12.
+2. En utilisant les formules du cours, déterminer des intervalles de confiance de probabilité
+de couverture 0.95 pour , puis pour , et enfin pour .
+Faire de même pour et avec la fonction confint
+
+```{r theo.rale}
+df <- data.frame(data)
+n <- nrow(df)
+
+
+# Avant tout, on trace les données pour vérifier qu'il n'y a pas de valeur aberrantes
+
+summary(df)
+
+var(df$O3) # variance of O3
+
+var(df$T12) # variance of T12
+
+
+hist(df$O3)
+
+hist(df$T12)
+
+
+plot(df$T12,df$O3,xlab="T12",ylab="O3")
+
+
+# Nous modélisons O3(i) = beta1 + beta2*T12(i) + eps(i)
+
+
+reg <- lm(O3~T12,data=df)
+
+summary(reg)
+
+
+## Question 2
+
+
+hat_beta1 <- reg$coefficients[1]
+hat_beta2 <- reg$coefficients[2]
+
+hat_sigma2 <- summary(reg)[["sigma"]]^2
+
+var_beta1 <- (hat_sigma2/n) * ((sum(df$T12^2)/n)/(sum((df$T12-mean(df$T12))^2)/n))
+var_beta2 <- (hat_sigma2/n) * (1/(sum((df$T12-mean(df$T12))^2)/n))
+
+alpha <- 0.05
+t.val <- qt(1-alpha/2, n - 2)
+
+IC1 <- c(hat_beta1 - t.val * sqrt(var_beta1), reg$coefficients[1] + t.val * sqrt(var_beta1))
+IC2 <- c(hat_beta2 - t.val * sqrt(var_beta2), reg$coefficients[2] + t.val * sqrt(var_beta2))
+
+IC1
+IC2
+confint(reg,level = 0.95)
+```
+
+
+3. Sur un même graphe, représenter les données, tracer la droite de régression, les intervalles
+de confiance à 95% pour E[y] et les intervalles de prévision à 95%. On pourra utiliser la
+fonction predict. Commenter.
+
+```{r }
+
+plot(O3~T12, data=df, ylim=c(min(df$O3), max(df$O3)))
+
+seq.x <- seq(min(df$T12), max(df$T12), length=3*n)
+grid.x <- data.frame(seq.x)
+dimnames(grid.x)[[2]] <- "T12"
+
+ICconf <- predict(reg, new=grid.x, interval="confidence", level=0.95)
+ICprev <- predict(reg, new=grid.x, interval="prediction", level=0.95)
+
+matlines(
+  grid.x, cbind(ICconf,ICprev[,-1]),
+  lty=c(1,2,2,3,3), col= c(1, 2, 2, 3, 3)
+)
+legend(
+  "topleft", lty=1:3,
+  c("Regression","Int. confiance", "Int. prevision")
+)
+```
+
+## Tests, analyse de la variance
+
+4. Tester les paramètres du modèle (en précisant bien $H_{0}$ et $H_{1}$ pour 
+chaque test). Commenter.
+
+| Paramètre   | $H_{0}$ | $H_{1}$ |
+|-------------|---------|---------|
+| $\beta_{1}$ | $\beta_{1} = 0$ | $\beta_{1} \ne 0$  |
+| $\beta_{2}$ | $\beta_{2} = 0$ | $\beta_{2} \ne 0$  |
+
+
+```{r test.beta2}
+#Test <- sqrt(n) * hat_beta2 / (sqrt(hat_sigma2)/var(df$T12))
+t.val <- qt(0.95, n - 2)
+#Test > t.val 
+Test1 <- hat_beta1[[1]] / sqrt(var_beta1)
+Test1 > t.val
+```
+
+Le coefficient $\beta_{2}$ est significatif au seuil de $\alpha = 0.05$.
+
+```{r test.beta1}
+#Test <- sqrt(n) * hat_beta1 / (hat_sigma2*(1 + ((mean(df$T12)^2) / (var(df$T12)))))
+#Test
+#t.val <- qt(0.95, n - 2)
+#Test > t.val 
+Test2 <- hat_beta2[[1]] / sqrt(var_beta2)
+Test2 > t.val
+```
+
+Le coefficient $\beta_{1}$ est significatif au seuil de $\alpha = 0.05$.
+
+5. Calculer à la main la valeur du coefficient de détermination et la valeur 
+de la statistique de Fisher. Commenter.
+
+```{r r.et.Fisher}
+SCR <- sum(residuals(reg)^2)
+SCM <- sum((fitted(reg) - mean(df$O3))^2)
+SCT <- sum((df$O3 - mean(df$O3))^2)
+
+r2.hat <- SCM /SCT
+
+F.hat <- (SCM / 1) / (SCR / (n - 2))
+f.test <- qf(0.95, 1, n-2)
+F.hat > f.test
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
