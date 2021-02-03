@@ -13,6 +13,12 @@ de l'UE. Je veux éventuellement tout traduire en anglais, pour permettre
 à la communauté non-francophone de profiter de la référence
 pratique en R que ce répertoire peut apporter.
 
+## Travaux
+
+1. [Prise en main (TP1)](build/TP1.html)
+
+2. [Données simulées (TP2)](build/TP2)
+   
 ## Reproducibilité
 
 * La plate-forme de développement pour le langage R est par excellence [RStudio](https://rstudio.com/).
@@ -34,10 +40,4 @@ pratique en R que ce répertoire peut apporter.
   pour éditer ou exécuter n'importe quel rapport `.Rmd` ou script `.R` sans 
   problèmes liés au paquets R.
 
-## Travaux
-
-1. [Prise en main (TP1)](build/TP1.html)
-
-2. [Données simulées (TP2)](build/TP2)
-   
    
