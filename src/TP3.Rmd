@@ -155,6 +155,12 @@ Le coefficient $\beta_{1}$ est significatif au seuil de $\alpha = 0.05$.
 5. Calculer à la main la valeur du coefficient de détermination et la valeur 
 de la statistique de Fisher. Commenter.
 
+|             |   |  
+|-------------|---------|
+| $H_{0}$     | $Y_{i} = \beta_1 + \epsilon_i$ est vrai |
+| $H_{1}$     | $Y_{i} = \beta_1 + \beta_2 x_{i} + \epsilon_i$ est vrai |
+
+
 ```{r r.et.Fisher}
 SCR <- sum(residuals(reg)^2)
 SCM <- sum((fitted(reg) - mean(df$O3))^2)
@@ -166,10 +172,75 @@ F.hat <- (SCM / 1) / (SCR / (n - 2))
 f.test <- qf(0.95, 1, n-2)
 F.hat > f.test
 ```
+Au seuil de significativité de $5\%$, le modèle de l'hypothèse $H_{1}$ est vrai.
+
+## Diagnostics
+
+6. Diagnostiquer les résidus. On pourra notamment utiliser la commande 
+plot appliquée à la sortie de la fonction `lm`.
+
+Les résidus ne semblent pas suivre une loi normale 
+d'après le `qqplot` puisque les queues de la densité
+des résidus standardardisés sont plus faibles que 
+celles de la loi normale $\mathcal{N}(0, 1)$.
+
+L'hypothèse d'homoscedasticité ne semble pas être vérifiée
+car les $\hat{\epsilon}_{i}$ n'ont pas tous la même variance. 
+En effet, $\epsilon_{1}, \cdots, \epsilon_{n}$ dépend de
+$x_{1}, \cdots, x_{n}$ $\rightarrow$ hétéroscedasticité. 
 
 
+```{r resid.analysis}
+hat_sigma <- sqrt(hat_sigma2)
+residus <- tibble(
+  n = 1:50,
+  residus = reg$residuals,
+  T12 = df$T12,
+  O3 = df$O3,
+  e.standardized = reg$residuals / hat_sigma
+)
+
+residus %>%
+  ggplot(mapping = aes(sample = residus)) +
+    stat_qq() +
+      stat_qq_line()
+```
+
+```{r diag2}
+residus %>%
+  ggplot(mapping = aes(x = e.standardized)) +
+    geom_histogram(
+      aes(y = stat(density)),
+      bins = 10,
+      colour="black", fill="white"
+    ) +
+      geom_density(alpha=.2, fill="blue") +
+      geom_vline(xintercept = 2, colour="red") +
+      geom_vline(xintercept = -2, colour="red")
+
+residus %>% filter( abs(e.standardized) > 2)
+```
+
+On ne peut pas conclure qu'il y a des valeurs
+aberrantes à partir de ce graphique. En plus, 
+si l'on filtre les erreurs standardisés dont 
+la valeur absolue est supérieure à 2, on 
+constate qu'il s'agit d'une seule observation
+$\hat{\epsilon}/\sigma = -2.20$ qui est
+plausible.
 
 
+```{r diag}
+residus %>%
+  ggplot(mapping = aes(x = T12, y = residus)) +
+    geom_point() + 
+      geom_smooth()
+```
+
+7. Proposer une transformation des données susceptible de mieux 
+expliquer la relation entre concentration maximale $O3$ et température 
+à midi $T12$. Interpréter le modèle final (i.e. refaire les questions 
+précédentes avec ce nouveau modèle).
 
 
 
