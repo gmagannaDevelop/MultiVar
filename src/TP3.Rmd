@@ -46,7 +46,6 @@ Avant tout, on trace les données pour vérifier qu'il n'y ait pas des valeurs a
 df <- data.frame(data)
 n <- nrow(df)
 
-
 tibble(df) %>%
   ggplot(mapping = aes(x = O3)) +
     geom_histogram(
@@ -109,15 +108,31 @@ t.val <- qt(1 - alpha/2, n - 2)
 IC1 <- c(hat_beta1 - t.val * sqrt(var_beta1), reg$coefficients[1] + t.val * sqrt(var_beta1))
 IC2 <- c(hat_beta2 - t.val * sqrt(var_beta2), reg$coefficients[2] + t.val * sqrt(var_beta2))
 
-IC1
-IC2
+n.ic.s2 <- (n - 2) * hat_sigma2
+d.ic.low <-  qchisq(1 - alpha/2, df = n-2)
+d.ic.up <-  qchisq(alpha/2, df = n-2)
+IC3 <- n.ic.s2 * c(1/d.ic.low, 1/d.ic.up)
+
 IC.confint <- confint(reg, level = 0.95)
 ```
 
+| Paramètre    | Borne Inférieure | Borne Supérieure |
+|--------------|------------------|------------------|
+| $\beta_{1}$  |    `r IC1[1]`    |    `r IC1[2]`    |
+| $\beta_{2}$  |    `r IC2[1]`    |    `r IC2[2]`    |
+| $\sigma^2$   |    `r IC3[1]`    |    `r IC3[2]`    |
 
-3. Sur un même graphe, représenter les données, tracer la droite de régression, les intervalles
-de confiance à 95% pour E[y] et les intervalles de prévision à 95%. On pourra utiliser la
-fonction `predict`. Commenter.
+Les intervalles de confiance calculés à partir des formules discutées en
+cours sont égaux à ceux obtenus à l'aide de la fonction `confint`.
+À partir des intervalles de confiance à $95\%$, nous remarquons que ceux
+associés aux coefficients $\beta$ ne comprennent pas zéro. Cela n'est pas 
+étonnant puisque nous avons vu précédemment que ces coefficients étaient 
+significatifs. Cependant, $\beta_1$ montre une grande variabilité ce qui 
+est expliqué par l'ordre de magnitude des résidus.
+
+3. Sur un même graphe, représenter les données, tracer la droite de régression, 
+les intervalles de confiance à $95\%$ pour $E[y]$ et les intervalles de
+prévision à $95\%$. On pourra utiliser la fonction `predict`. Commenter.
 
 ```{r Question.3, echo=FALSE}
 plot(O3 ~ T12, data = df, ylim = c(min(df$O3), max(df$O3)))
@@ -140,6 +155,16 @@ legend(
 )
 ```
 
+L'écart des points par rapport à la ligne de régression est en accord
+avec la discussion précédente sur les résidus et la variance. 
+Les intervalles des prévision sont toujours plus amples que ceux de confiance. 
+Ceci est interprétable comme suit : 
+Les intervalles de confiance concernent l'espérance de la concentration
+$O3$, pour une température $T12$ donnée, alors que les intervalles 
+de prévision essaient de prendre en compte toute concentration possible
+dans le seuil fixé.
+
+
 ## Tests, analyse de la variance
 
 4. Tester les paramètres du modèle (en précisant bien $H_{0}$ et $H_{1}$ pour 
@@ -150,38 +175,36 @@ chaque test). Commenter.
 | $\beta_{1}$ | $\beta_{1} = 0$ | $\beta_{1} \ne 0$  |
 | $\beta_{2}$ | $\beta_{2} = 0$ | $\beta_{2} \ne 0$  |
 
-
 ```{r Question.4}
-#Test <- sqrt(n) * hat_beta2 / (sqrt(hat_sigma2)/var(df$T12))
-t.val <- qt(0.95, n - 2)
-
+t.val <- qt(0.975, n - 2)
 Test1 <- hat_beta1[[1]] / sqrt(var_beta1)
 Test1 > t.val
 ```
 
 Le coefficient $\beta_{2}$ est significatif au seuil de $\alpha = 0.05$.
 
-```{r test.beta1, echo=FALSE}
-#Test <- sqrt(n) * hat_beta1 / (hat_sigma2*(1 + ((mean(df$T12)^2) / (var(df$T12)))))
-#Test
-#t.val <- qt(0.95, n - 2)
-#Test > t.val 
+```{r test.beta1}
 Test2 <- hat_beta2[[1]] / sqrt(var_beta2)
 Test2 > t.val
 ```
 
 Le coefficient $\beta_{1}$ est significatif au seuil de $\alpha = 0.05$.
 
+Pour les deux paramètres, on rejette l'hypothèse nulle.
+
+Les valeurs sont $Test1 =$ `r Test1` et $Test2 =$ `r Test2`.
+
+
 5. Calculer à la main la valeur du coefficient de détermination et la valeur 
 de la statistique de Fisher. Commenter.
 
 |             |   |  
 |-------------|---------|
-| $H_{0}$     | $Y_{i} = \beta_1 + \epsilon_i$ est vrai |
-| $H_{1}$     | $Y_{i} = \beta_1 + \beta_2 x_{i} + \epsilon_i$ est vrai |
+| $H_{0}$     | $Y_{i} = \beta_1 + \varepsilon_i$ est vrai |
+| $H_{1}$     | $Y_{i} = \beta_1 + \beta_2 x_{i} + \varepsilon_i$ est vrai |
 
 
-```{r r.et.Fisher, echo=FALSE}
+```{r r.et.Fisher}
 SCR <- sum(residuals(reg)^2)
 SCM <- sum((fitted(reg) - mean(df$O3))^2)
 SCT <- sum((df$O3 - mean(df$O3))^2)
@@ -192,7 +215,11 @@ F.hat <- (SCM / 1) / (SCR / (n - 2))
 f.test <- qf(0.95, 1, n - 2)
 F.hat > f.test
 ```
-Au seuil de significativité de $5\%$, le modèle de l'hypothèse $H_{1}$ est vrai.
+
+La valeur estimé du test Fisher est $\mathcal{F}_{0.95}(1, 48) =$ `r F.hat`.
+On rejette $H_{0}$ :  Le modèle $Y_{i} = \beta_1 + \beta_2 x_{i} + \varepsilon_i$
+explique mieux la relation entre la concentration d'ozone et la température que
+$Y_{i} = \beta_1 + \varepsilon_i$.
 
 ## Diagnostics
 
@@ -210,7 +237,7 @@ En effet, $\epsilon_{1}, \cdots, \epsilon_{n}$ dépend de
 $x_{1}, \cdots, x_{n}$ $\rightarrow$ hétéroscedasticité. 
 
 
-```{r resid.analysis, echo=FALSE}
+```{r resid.analysis, echo=FALSE, message=FALSE}
 hat_sigma <- sqrt(hat_sigma2)
 residus <- tibble(
   n = 1:50,
@@ -228,7 +255,8 @@ residus %>%
 residus %>%
   ggplot(mapping = aes(x = T12, y = residus)) +
     geom_point() + 
-      geom_smooth()
+      geom_smooth() +
+        ggtitle("epsilon ~ temperature")
 ```
 
 ```{r diag2, echo=FALSE}
@@ -259,27 +287,70 @@ expliquer la relation entre concentration maximale $O3$ et température
 à midi $T12$. Interpréter le modèle final (i.e. refaire les questions 
 précédentes avec ce nouveau modèle).
 
-D'après le graphique $\left(x_i,\hat{\varepsilon_i}\right)$, nous remarquons que
+D'après le graphique $\left(x_i,\hat{\varepsilon}_i\right)$, nous remarquons
 une rupture entre les températures inférieures et supérieures à 20-22 dégrés.
 Nous pouvons donc proposer deux modèles univariés: modèle (1)
 $O3_{i} = \beta_1^\star + \beta_2^\star \times T12_i + \varepsilon_i \quad \forall\; T_i < 21$ 
 et modèle (2) $O3_{i} = \beta_1^\ast + \beta_2^\ast \times T12_i + \varepsilon_i \quad \forall\; T_i > 21$.
 
 ```{r model.2, echo=FALSE}
-reg1<-lm(O3~T12,data=df[df$T12<21,])
+reg1 <- lm(O3 ~ T12, data = df[df$T12<21,])
 summary(reg1)
 
-reg3<-lm(O3~T12,data=df[df$T12>21,])
-summary(reg3)
+reg2 <- lm(O3 ~ T12, data = df[df$T12>21,])
+summary(reg2)
 ```
-Dans le premier modèle (1), nous remarquons que le coefficient $\beta_2^\star$
-n'est pas significatif. En effet, la $p-\text{value}$ est de 0.136 donc il n'y a aucune significativité
-même au seuil de $\alpha = 10\%$. Concernant le modèle (2), le coefficient $\beta_2^\ast$
-est très significatif avec une $p-\text{value} \approx 0$. Nous remarquons également un
+Dans le modèle (1), nous remarquons que le coefficient $\beta_2^\star$
+n'est pas significatif. En effet, la $p-\text{value}$ est de $0.136$ donc il n'y 
+a pas de significativité même au seuil de $\alpha = 10\%$. 
+Concernant le modèle (2), le coefficient $\beta_2^\ast$ est très significatif 
+avec une $p-\text{value} \approx 0$. Nous remarquons également un
 coefficient de détermination $\mathfrak{R}^2 = 0.56$. Ce coefficient est très
 supérieur au coefficient $\mathfrak{R}^2 = 0.28$ obtenu à la question (1).
 En revanche, le coefficient de détermination est très faible dans le modèle (1)
-car la concentration en O3 n'est pas expliquée par la température en deçà de 20 degrés celcius.
+car la concentration en $O3$ n'est pas significativement expliquée par la température en deçà de 21 
+degrés celsius.
+
+
+```{r question7.modele2}
+reg3 <- lm(O3 ~ 1, data = df[df$T12<21,])
+summary(reg3)
+```
+
+
+```{r question7.plot, echo=FALSE}
+
+df.mod1 <-  df[df$T12 < 21, ]
+df.mod2 <-  df[df$T12 > 21, ]
+
+tibble(df.mod1) %>%
+  ggplot(mapping = aes(x = T12, y = O3)) +
+    geom_point() +
+      geom_abline(
+        slope = reg1$coefficients[["T12"]],
+        intercept = reg1$coefficients[["(Intercept)"]],
+        colour = "blue", 
+      ) + 
+      geom_abline(
+        slope = 0,
+        intercept = reg3$coefficients[["(Intercept)"]],
+        colour = "red"
+      ) +
+        ggtitle("Modele T12 < 21, bleu : avec Beta2, rouge sans Beta2")
+    
+
+
+tibble(df.mod2) %>%
+  ggplot(mapping = aes(x = T12, y = O3)) +
+    geom_point() +
+      geom_abline(
+        slope = reg2$coefficients[["T12"]],
+        intercept = reg2$coefficients[["(Intercept)"]],
+        colour = "green"
+      ) +
+        ggtitle("Modele T12 > 21")
+```
+
 
 Question 8
 
