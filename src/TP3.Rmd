@@ -192,7 +192,8 @@ Le coefficient $\beta_{1}$ est significatif au seuil de $\alpha = 0.05$.
 
 Pour les deux paramètres, on rejette l'hypothèse nulle.
 
-Les valeurs sont $Test1 =$ `r Test1` et $Test2 =$ `r Test2`.
+Les valeurs sont $T1 =\frac{\hat{\beta}_1}{\hat{\sigma}_{\beta_1}} =$
+`r Test1` et $T2 =\frac{\hat{\beta}_2}{\hat{\sigma}_{\beta_2}} =$ `r Test2`.
 
 
 5. Calculer à la main la valeur du coefficient de détermination et la valeur 
@@ -350,45 +351,6 @@ tibble(df.mod2) %>%
       ) +
         ggtitle("Modele T12 > 21")
 ```
-
-
-Question 8
-
-Supposons que la température soit expliquée par elle-même au carré, alors le logarithme
-de la concentration en O3 dans l'air peut exploser à condition que la température
-soit très élevée car au carré, cela augmente très vite. Ce qui explique que, comme nous
-raisonnons au carré, la pente de la courbe est nulle en deçà d'une certaine température,
-et que ça devient concentré en O3 au dessus. Je pense que cette démonstration est fallacieuse.
-Mais il est tellement illégal qu'aucune peine n'est possible face à une telle situation.
-Aucun loi ne peut tolérer cela, mais aucune punition, même au carré, pourra corriger
-ce genre de comportement.
-
-Question 9
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
