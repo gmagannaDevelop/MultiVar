@@ -17,7 +17,9 @@ pratique en R que ce répertoire peut apporter.
 
 1. [Prise en main (TP1)](build/TP1.html)
 
-2. [Données simulées (TP2)](build/TP2)
+2. [Données simulées (TP2)](build/TP2.html)
+
+3. [Tests sur les modèles (TP3)](build/TP3.html)
    
 ## Reproducibilité
 

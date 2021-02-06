@@ -29,7 +29,7 @@ coefficient de détermination.
 
 ## Intervalles de confiance, intervalle de prévision
 
-```{r import, message=FALSE, echo=FALSE}
+```{r import, message=FALSE, }
 library(tidyverse)
 data <- readr::read_delim(
   here::here("data", "ozone_simple.txt"), delim = ";", 
@@ -42,7 +42,7 @@ linéaire expliquant $O3$ à l’aide de $T12$.
 
 Avant tout, on trace les données pour vérifier qu'il n'y ait pas des valeurs aberrantes.
 
-```{r Question.1, echo=FALSE}
+```{r Question.1, }
 df <- data.frame(data)
 n <- nrow(df)
 
@@ -69,7 +69,7 @@ tibble(df) %>%
   ggplot(mapping = aes(x = T12, y = O3)) +
     geom_point()
 ```
-```{r Question.1.b, echo=FALSE}
+```{r Question.1.b, }
 summary(df)
 var(df$O3) 
 var(df$T12) 
@@ -77,7 +77,7 @@ var(df$T12)
 
 Nous modélisons $O3_i = \beta_1 + \beta_2T12_i + \varepsilon_i$
 
-```{r Question.1.c, echo=FALSE}
+```{r Question.1.c, }
 reg <- lm(O3 ~ T12, data = df)
 summary(reg)
 ```
@@ -93,7 +93,7 @@ confiance de probabilité de couverture $0.95$ pour $\beta_1$, puis pour
 $\beta_2$, et enfin pour $\sigma^2$.
 Faire de même pour les coefficients $\beta_1$ et $\beta_2$ 
 avec la fonction `confint`.
-```{r Question.2, echo=FALSE}
+```{r Question.2, }
 hat_beta1 <- reg$coefficients[1]
 hat_beta2 <- reg$coefficients[2]
 
@@ -134,7 +134,7 @@ est expliqué par l'ordre de magnitude des résidus.
 les intervalles de confiance à $95\%$ pour $E[y]$ et les intervalles de
 prévision à $95\%$. On pourra utiliser la fonction `predict`. Commenter.
 
-```{r Question.3, echo=FALSE}
+```{r Question.3, }
 plot(O3 ~ T12, data = df, ylim = c(min(df$O3), max(df$O3)))
 
 seq.x <- seq(min(df$T12), max(df$T12), length=3*n)
@@ -238,7 +238,7 @@ En effet, $\epsilon_{1}, \cdots, \epsilon_{n}$ dépend de
 $x_{1}, \cdots, x_{n}$ $\rightarrow$ hétéroscedasticité. 
 
 
-```{r resid.analysis, echo=FALSE, message=FALSE}
+```{r resid.analysis, , message=FALSE}
 hat_sigma <- sqrt(hat_sigma2)
 residus <- tibble(
   n = 1:50,
@@ -260,7 +260,7 @@ residus %>%
         ggtitle("epsilon ~ temperature")
 ```
 
-```{r diag2, echo=FALSE}
+```{r diag2, }
 residus %>%
   ggplot(mapping = aes(x = e.standardized)) +
     geom_histogram(
@@ -294,7 +294,7 @@ Nous pouvons donc proposer deux modèles univariés: modèle (1)
 $O3_{i} = \beta_1^\star + \beta_2^\star \times T12_i + \varepsilon_i \quad \forall\; T_i < 21$ 
 et modèle (2) $O3_{i} = \beta_1^\ast + \beta_2^\ast \times T12_i + \varepsilon_i \quad \forall\; T_i > 21$.
 
-```{r model.2, echo=FALSE}
+```{r model.2, }
 reg1 <- lm(O3 ~ T12, data = df[df$T12<21,])
 summary(reg1)
 
@@ -319,7 +319,7 @@ summary(reg3)
 ```
 
 
-```{r question7.plot, echo=FALSE}
+```{r question7.plot, }
 
 df.mod1 <-  df[df$T12 < 21, ]
 df.mod2 <-  df[df$T12 > 21, ]
