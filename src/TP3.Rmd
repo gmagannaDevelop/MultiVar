@@ -245,19 +245,26 @@ residus <- tibble(
   residus = reg$residuals,
   T12 = df$T12,
   O3 = df$O3,
-  e.standardized = reg$residuals / hat_sigma
+  e.standardized = reg$residuals / hat_sigma,
+  adjusted = predict(reg)
 )
 
 residus %>%
-  ggplot(mapping = aes(sample = residus)) +
+  ggplot(mapping = aes(sample = e.standardized)) +
     stat_qq() +
       stat_qq_line()
 
 residus %>%
-  ggplot(mapping = aes(x = T12, y = residus)) +
+  ggplot(mapping = aes(x = T12, y = e.standardized)) +
     geom_point() + 
       geom_smooth() +
         ggtitle("epsilon ~ temperature")
+
+residus %>%
+  ggplot(mapping = aes(x = O3, y = e.standardized)) +
+    geom_point() + 
+      geom_smooth() +
+        ggtitle("epsilon ~ O3")
 ```
 
 ```{r diag2, }

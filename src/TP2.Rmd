@@ -4,9 +4,12 @@ author: "Gustavo Magaña López"
 date: "25/01/2021"
 output:
   html_document:
-    toc: true
+    toc: yes
     toc_depth: 3
     df_print: paged
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
 ---
 
 ```{r setup, include=FALSE}
@@ -19,6 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Pour puovoir reproduire les resultats :
 set.seed(1234)
 library(tidyverse)
+library(plotly)
 ```
 
 ## Objectifs du TP
@@ -84,13 +88,15 @@ var(lm1$residuals)
 
 ```{r vis.ponct}
 donnees <- tibble::tibble(y=y_i, x=x_i)
-donnees %>%
+plot1 <- donnees %>%
   ggplot(mapping = aes(x=x, y=y)) +
     geom_point() +
       geom_abline(
         slope = lm1$coefficients[["x_i"]],
-        intercept = lm1$coefficients[["(Intercept)"]]
+        intercept = lm1$coefficients[["(Intercept)"]],
+        colour = "blue"
       )
+ggplotly(plot1)
 ```
 
 ## Simulation 
@@ -187,7 +193,8 @@ saut à l'œil comme un point important à discuter.
 ```{r analyse, message=FALSE, warning=FALSE}
 # Le code est le même pour les autres histogrammes 
 source(here::here("utils", "plotting-funcs.R"))
-experiences %>%
+
+plot.beta1 <- experiences %>%
   ggplot(mapping = aes(x = beta1)) +
     geom_histogram(
         aes(y = stat(density)), colour="black", fill="white", 
@@ -195,10 +202,11 @@ experiences %>%
     ) + 
         geom_density(alpha=.2, fill="blue") +
     ggtitle(glue::glue("B1 : {round(mean(experiences$beta1), 2)} vs {beta1}"))
+ggplotly(plot.beta1)
 ```
 
 ```{r analyse2, message=FALSE, warning=FALSE, echo=FALSE}
-experiences %>%
+plot.beta2 <- experiences %>%
   ggplot(mapping = aes(x = beta2)) +
     geom_histogram(
         aes(y = stat(density)), colour="black", fill="white", 
@@ -206,10 +214,11 @@ experiences %>%
     ) + 
         geom_density(alpha=.2, fill="blue") +
     ggtitle(glue::glue("B2 : {round(mean(experiences$beta2), 2)} vs {beta2}"))
+ggplotly(plot.beta2)
 ```
 
 ```{r analyse3, message=FALSE, warning=FALSE, echo=FALSE}
-experiences %>%
+plot.sigma2 <- experiences %>%
   ggplot(mapping = aes(x = sigma2)) +
     geom_histogram(
         aes(y = stat(density)), colour="black", fill="white", 
@@ -217,6 +226,7 @@ experiences %>%
     ) + 
         geom_density(alpha=.2, fill="blue") +
     ggtitle(glue::glue("sigma2 : {round(mean(experiences$sigma2), 2)} vs {sigma2}"))
+ggplotly(plot.sigma2)
 ```
 
 ### $x_{i}$ fixe, $y_{i}$ recalculé
@@ -255,7 +265,7 @@ experiences <- tibble::tibble(experiences)
 
 ```{r xi.fixee.analyse, message=FALSE, warning=FALSE, echo=FALSE}
 source(here::here("utils", "plotting-funcs.R"))
-experiences %>%
+plot.fix.beta1 <- experiences %>%
   ggplot(mapping = aes(x = beta1)) +
     geom_histogram(
         aes(y = stat(density)), colour="black", fill="white", 
@@ -263,10 +273,12 @@ experiences %>%
     ) + 
         geom_density(alpha=.2, fill="blue") +
     ggtitle(glue::glue("B1 : {round(mean(experiences$beta1), 2)} vs {beta1}"))
+
+ggplotly(plot.fix.beta1)
 ```
 
 ```{r xi.fixee.analyse2, message=FALSE, warning=FALSE, echo=FALSE}
-experiences %>%
+plot.fix.beta2 <- experiences %>%
   ggplot(mapping = aes(x = beta2)) +
     geom_histogram(
         aes(y = stat(density)), colour="black", fill="white", 
@@ -274,10 +286,12 @@ experiences %>%
     ) + 
         geom_density(alpha=.2, fill="blue") +
     ggtitle(glue::glue("B2 : {round(mean(experiences$beta2), 2)} vs {beta2}"))
+
+ggplotly(plot.fix.beta2)
 ```
 
 ```{r xi.fixee.analyse3, message=FALSE, warning=FALSE, echo=FALSE}
-experiences %>%
+plot.fix.sigma2 <- experiences %>%
   ggplot(mapping = aes(x = sigma2)) +
     geom_histogram(
         aes(y = stat(density)), colour="black", fill="white", 
@@ -285,5 +299,7 @@ experiences %>%
     ) + 
         geom_density(alpha=.2, fill="blue") +
     ggtitle(glue::glue("sigma2 : {round(mean(experiences$sigma2), 2)} vs {sigma2}"))
+
+ggplotly(plot.fix.sigma2)
 ```
 

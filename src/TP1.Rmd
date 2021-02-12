@@ -41,6 +41,7 @@ la concentration maximale $03$ à l'aide de la température T12.
 1. Importer les données `ozone_simple.txt`.
 ```{r import, message=FALSE}
 library(tidyverse)
+library(plotly)
 data <- readr::read_delim(
   here::here("data", "ozone_simple.txt"), delim = ";", 
   col_types = c(col_double(), col_double())
@@ -68,7 +69,7 @@ data %>%
 3. Tracer l'histogramme de la concentration maximale 03, puis celui de la température T12.
 ```{r hists}
 source(here::here("utils", "plotting-funcs.R"))
-data %>%
+p.density.o3 <- data %>%
     ggplot(aes(x = O3)) +
       geom_histogram(
         aes(y = stat(density)), colour="black", fill="white", 
@@ -77,22 +78,27 @@ data %>%
         geom_density(alpha=.2, fill="blue")
 
 
-data %>%
+p.density.t12 <- data %>%
   ggplot(aes(x = T12)) +
     geom_histogram(
         aes(y = stat(density)), colour="black", fill="white", 
         binwidth = optim.binwidth(data$T12)
       ) + 
         geom_density(alpha=.2, fill="blue")
+
+ggplotly(p.density.o3)
+ggplotly(p.density.t12)
 ```
 
 
 4. Tracer, sous la forme d'un nuage de point, le graphe de la concentration maximale 03 en
 fonction de la température T12.
 ```{r nuage}
-data %>%
+plot.scatter <- data %>%
   ggplot(aes(x = T12, y = O3)) +
     geom_point()
+
+ggplotly(plot.scatter)
 ```
 
 
@@ -131,10 +137,11 @@ représentant les observations).
 
 ```{r estimations}
 
-data %>%
+plot.regline <- data %>%
   ggplot(mapping = aes(x=T12, y=O3)) + 
     geom_point() +
-      geom_abline(slope = beta2_lm, intercept = beta1_lm)
+      geom_abline(slope = beta2_lm, intercept = beta1_lm, colour="blue")
+ggplotly(plot.regline)
 ```
 
 ## Analyse des résidus
@@ -144,10 +151,11 @@ data %>%
 ```{r qq}
 residus <- tibble(T12=data$T12, residuals=modele$residuals)
 
-residus %>%
+my.qqplot <- residus %>%
   ggplot(mapping = aes(sample = residuals)) +
     stat_qq() + 
       stat_qq_line()
+ggplotly(my.qqplot)
 ```
 
 Les résidus ne semblent d'être _i.i.d_. Leur distribution semble d'être 
@@ -161,17 +169,21 @@ le rejet de l'hypothèse de nulle de normalité à un $95\%$ de confiance.
 
 
 ```{r resids}
-residus %>%
+plot.reg.res <- residus %>%
   ggplot(mapping = aes(x=T12, y=residuals)) +
-    geom_point()
+    geom_point() + 
+      geom_smooth()
 
-residus %>%
+plot.reg.res.dist <- residus %>%
   ggplot(aes(x = residuals)) +
     geom_histogram(
         aes(y = stat(density)), colour="black", fill="white", 
         binwidth = optim.binwidth(residus$residuals)
       ) + 
         geom_density(alpha=.2, fill="blue")
+
+ggplotly(plot.reg.res)
+ggplotly(plot.reg.res.dist)
 
 shapiro.test(modele$residuals)
 ```
